@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { afterEach, describe, test, vi } from 'vitest'
 import { makeBalanceCapsule } from '../../../src/client/components/balanceCapsule'
 import { PLATFORM_BALANCE_STORAGE_KEY, resetPlatformBalance } from '../../../src/client/balance'
+import { resetDisplayCurrencyPreference, setDisplayCurrencyPreference } from '../../../src/client/currency'
 import { asClientCtx, TestClientCtx } from '../helpers/harness'
 import { flush, makeKit, mount, query, text } from '../helpers/kit'
 
@@ -27,6 +28,7 @@ function remember(balance: unknown): void {
 
 afterEach(() => {
   resetPlatformBalance()
+  resetDisplayCurrencyPreference()
   globalThis.localStorage.clear()
   vi.unstubAllGlobals()
 })
@@ -88,6 +90,34 @@ describe('BalanceCapsule', () => {
     assert.equal(query(zh.container, '.lc-ov-balance-value')?.textContent, '¥110.00')
     assert.equal(query(zh.container, '.lc-ov-balance').getAttribute('data-lc-tip'), '充值余额: ¥100.00\n赠送余额: ¥10.00')
     await zh.unmount()
+  })
+
+  test('an en page shows the funded CNY entry when the USD entry is zero', async () => {
+    stubRoute({
+      ok: true,
+      value: {
+        isAvailable: true,
+        balances: [
+          { currency: 'CNY', total: 58.97, granted: 0, toppedUp: 58.97 },
+          { currency: 'USD', total: 0, granted: 0, toppedUp: 0 },
+        ],
+      },
+    })
+    const Capsule = makeBalanceCapsule(asClientCtx(new TestClientCtx({ locale: 'en' })), kit)
+    const m = await mount(h(Capsule, {}))
+    await flush()
+    assert.equal(query(m.container, '.lc-ov-balance-value')?.textContent, '¥58.97', 'the funded currency beats the display currency')
+    await m.unmount()
+  })
+
+  test('the currency preference overrides the language rule', async () => {
+    stubRoute({ ok: true, value: WIRE_BALANCE })
+    setDisplayCurrencyPreference('cny')
+    const Capsule = makeBalanceCapsule(asClientCtx(new TestClientCtx({ locale: 'en' })), kit)
+    const m = await mount(h(Capsule, {}))
+    await flush()
+    assert.equal(query(m.container, '.lc-ov-balance-value')?.textContent, '¥110.00')
+    await m.unmount()
   })
 
   test('zero sub-items drop from the tooltip; an all-zero account rides bare', async () => {

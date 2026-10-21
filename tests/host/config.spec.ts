@@ -29,6 +29,7 @@ describe('Config validator (cordis Standard Schema face)', () => {
       overviewAutoSteps: '200',
       defaultOverviewRange: '30d',
       fleetTab: 'show',
+      displayCurrency: 'auto',
       promptPrefix: '',
       promptSuffix: '',
     })
@@ -58,7 +59,7 @@ describe('Config validator (cordis Standard Schema face)', () => {
 describe('preference fields (the Config-form generation surface)', () => {
   test('every preference is volatile-marked; the bounds are not', () => {
     const dict = Config.dict ?? {}
-    for (const pref of ['defaultPlacement', 'defaultGranularity', 'defaultTrendMode', 'defaultDeltaBase', 'defaultToolSort', 'defaultFileSort', 'insightsEntry', 'defaultDurationCurve', 'overviewAutoSteps', 'defaultOverviewRange', 'fleetTab', 'promptPrefix', 'promptSuffix']) {
+    for (const pref of ['defaultPlacement', 'defaultGranularity', 'defaultTrendMode', 'defaultDeltaBase', 'defaultToolSort', 'defaultFileSort', 'insightsEntry', 'defaultDurationCurve', 'overviewAutoSteps', 'defaultOverviewRange', 'fleetTab', 'displayCurrency', 'promptPrefix', 'promptSuffix']) {
       assert.equal((dict[pref] as z['dict'] extends undefined ? never : { meta?: { volatile?: boolean } }).meta?.volatile, true, pref)
     }
     for (const bound of ['maxRequestSteps', 'maxKeptTurns', 'maxEvents', 'maxNodes', 'maxArchiveNodes', 'maxFileOps']) {
@@ -71,12 +72,13 @@ describe('preference fields (the Config-form generation surface)', () => {
     assert.equal(deref(resolved.defaultGranularity), 'step')
     assert.equal(deref(resolved.overviewAutoSteps), '200')
     assert.equal(deref(resolved.defaultOverviewRange), '30d')
+    assert.equal(deref(resolved.displayCurrency), 'auto')
     assert.equal(deref(resolved.promptPrefix), '', 'a non-string prompt value degrades to the empty default')
     assert.equal(deref(resolved.promptSuffix), '')
-    const stored = Config({ defaultPlacement: 'hide', defaultFileSort: 'count', insightsEntry: 'hide', overviewAutoSteps: 'off', defaultOverviewRange: '7d', fleetTab: 'hide', promptPrefix: 'Be terse.', promptSuffix: 'Sign as Atlas.' }) as unknown as Record<string, unknown>
+    const stored = Config({ defaultPlacement: 'hide', defaultFileSort: 'count', insightsEntry: 'hide', overviewAutoSteps: 'off', defaultOverviewRange: '7d', fleetTab: 'hide', displayCurrency: 'cny', promptPrefix: 'Be terse.', promptSuffix: 'Sign as Atlas.' }) as unknown as Record<string, unknown>
     assert.deepEqual(
-      ['defaultPlacement', 'defaultFileSort', 'insightsEntry', 'overviewAutoSteps', 'defaultOverviewRange', 'fleetTab', 'promptPrefix', 'promptSuffix'].map(key => deref(stored[key])),
-      ['hide', 'count', 'hide', 'off', '7d', 'hide', 'Be terse.', 'Sign as Atlas.'],
+      ['defaultPlacement', 'defaultFileSort', 'insightsEntry', 'overviewAutoSteps', 'defaultOverviewRange', 'fleetTab', 'displayCurrency', 'promptPrefix', 'promptSuffix'].map(key => deref(stored[key])),
+      ['hide', 'count', 'hide', 'off', '7d', 'hide', 'cny', 'Be terse.', 'Sign as Atlas.'],
     )
   })
 })

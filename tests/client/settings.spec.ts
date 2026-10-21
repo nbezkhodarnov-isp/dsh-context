@@ -49,10 +49,12 @@ describe('createContextSettings defaults', () => {
       overviewAutoSteps: '200',
       overviewRange: '30d',
       fleetTab: 'show',
+      displayCurrency: 'auto',
       promptPrefix: '',
       promptSuffix: '',
       writable: false,
     })
+    assert.equal(s.displayCurrency(), 'auto')
   })
 })
 
@@ -94,6 +96,8 @@ describe('set', () => {
     assert.equal(s.overviewAutoSteps(), 'off')
     s.set('defaultOverviewRange', 'today')
     assert.equal(s.defaultOverviewRange(), 'today')
+    s.set('displayCurrency', 'cny')
+    assert.equal(s.displayCurrency(), 'cny')
     s.attach(new TestSettingsScope({ status: 'ready', value: { defaultPlacement: 'hide' }, writable: true }))
     assert.equal(s.defaultPlacement(), 'hide')
     s.set('defaultPlacement', 'all')
@@ -158,8 +162,10 @@ describe('set', () => {
     kept.attach(emptyScope)
     emptyScope.failSet = true
     kept.set('defaultFileSort', 'path')
+    kept.set('displayCurrency', 'cny')
     await new Promise(resolve => setTimeout(resolve, 0))
     assert.equal(kept.defaultFileSort(), 'path', 'the in-session choice survives')
+    assert.equal(kept.displayCurrency(), 'cny', 'the in-session currency survives')
 
     const rolled = createContextSettings()
     const promptScope = new TestSettingsScope({ status: 'ready', value: { promptPrefix: 'kept' }, writable: true })
@@ -169,6 +175,14 @@ describe('set', () => {
     assert.equal(rolled.store.getSnapshot().promptPrefix, 'draft', 'the optimistic echo lands first')
     await new Promise(resolve => setTimeout(resolve, 0))
     assert.equal(rolled.store.getSnapshot().promptPrefix, 'kept', 'the echo rolls back to the scope truth')
+
+    const currency = createContextSettings()
+    const currencyScope = new TestSettingsScope({ status: 'ready', value: { displayCurrency: 'usd' }, writable: true })
+    currency.attach(currencyScope)
+    currencyScope.failSet = true
+    currency.set('displayCurrency', 'cny')
+    await new Promise(resolve => setTimeout(resolve, 0))
+    assert.equal(currency.displayCurrency(), 'usd', 'the currency echo rolls back to the scope truth')
   })
 })
 
@@ -189,6 +203,7 @@ describe('attach', () => {
         overviewAutoSteps: '300',
         defaultOverviewRange: '7d',
         fleetTab: 'hide',
+        displayCurrency: 'cny',
         promptPrefix: 'Be terse.',
         promptSuffix: 'Sign as Atlas.',
       },
@@ -208,6 +223,7 @@ describe('attach', () => {
       overviewAutoSteps: '300',
       overviewRange: '7d',
       fleetTab: 'hide',
+      displayCurrency: 'cny',
       promptPrefix: 'Be terse.',
       promptSuffix: 'Sign as Atlas.',
       writable: true,
@@ -255,6 +271,7 @@ describe('attach', () => {
         overviewAutoSteps: '200',
         overviewRange: '30d',
         fleetTab: 'show',
+        displayCurrency: 'auto',
         promptPrefix: '',
         promptSuffix: '',
         writable: false,
@@ -266,7 +283,7 @@ describe('attach', () => {
     const s = createContextSettings()
     s.attach(new TestSettingsScope({
       status: 'ready',
-      value: { defaultPlacement: 'window', defaultGranularity: 'bogus', defaultTrendMode: 7, defaultDeltaBase: 'bogus', defaultToolSort: 'alpha', defaultFileSort: 'alpha', insightsEntry: 42, defaultDurationCurve: 'always', overviewAutoSteps: 200, defaultOverviewRange: 'week', fleetTab: 7, promptPrefix: 9, promptSuffix: {} },
+      value: { defaultPlacement: 'window', defaultGranularity: 'bogus', defaultTrendMode: 7, defaultDeltaBase: 'bogus', defaultToolSort: 'alpha', defaultFileSort: 'alpha', insightsEntry: 42, defaultDurationCurve: 'always', overviewAutoSteps: 200, defaultOverviewRange: 'week', fleetTab: 7, displayCurrency: 'euro', promptPrefix: 9, promptSuffix: {} },
       writable: false,
     }))
     assert.equal(s.defaultPlacement(), 'all')
@@ -280,6 +297,7 @@ describe('attach', () => {
     assert.equal(s.overviewAutoSteps(), '200')
     assert.equal(s.defaultOverviewRange(), '30d')
     assert.equal(s.fleetTab(), 'show')
+    assert.equal(s.displayCurrency(), 'auto')
     assert.equal(s.store.getSnapshot().promptPrefix, '', 'a non-string prompt value degrades to the empty default')
     assert.equal(s.store.getSnapshot().promptSuffix, '')
   })
@@ -310,6 +328,7 @@ describe('attach', () => {
     s.set('defaultDurationCurve', 'hide')
     s.set('overviewAutoSteps', '100')
     s.set('defaultOverviewRange', 'today')
+    s.set('displayCurrency', 'cny')
     s.set('promptPrefix', 'drafted')
     s.attach(new TestSettingsScope({ status: 'ready', value: { defaultFileSort: 'latest' }, writable: false }))
     assert.equal(s.defaultPlacement(), 'tab', 'the in-session choice survives a section without the field')
@@ -321,6 +340,7 @@ describe('attach', () => {
     assert.equal(s.defaultDurationCurve(), 'hide', 'the in-session curve choice survives a section without the field')
     assert.equal(s.overviewAutoSteps(), '100', 'the in-session auto-overview choice survives a section without the field')
     assert.equal(s.defaultOverviewRange(), 'today', 'the in-session overview range survives a section without the field')
+    assert.equal(s.displayCurrency(), 'cny', 'the in-session currency survives a section without the field')
     assert.equal(s.store.getSnapshot().promptPrefix, 'drafted', 'the in-session prompt text survives a section without the field')
   })
 
@@ -398,6 +418,7 @@ describe('attach', () => {
       overviewAutoSteps: '200',
       overviewRange: '30d',
       fleetTab: 'show',
+      displayCurrency: 'auto',
       promptPrefix: '',
       promptSuffix: '',
       writable: true,
